@@ -1,11 +1,8 @@
 本文介绍如何选择数据缓存和元数据缓存方面的参数。
 
-
 ### 打开/关闭数据缓存
 
-
-在 GooseFSRuntime 中，数据缓存默认打开，也可通过在 Runtime 中指定 `gfs.cache.data-cache.enable: "false"` 来关闭缓存，如下
-
+在 GooseFSRuntime 中，数据缓存默认打开，也可通过在 Runtime 中指定 `gfs.cache.data-cache.enable: "false"` 来关闭缓存，如下
 
 ```yaml
 apiVersion: data.fluid.io/v1alpha1
@@ -28,11 +25,10 @@ spec:
       gfs.cache.data-cache.enable: "false"
 ```
 
-
 ### 打开元数据缓存
 
+在 GooseFSRuntime 中，元数据缓存默认关闭，通过元数据缓存元数据信息，可通过在 Runtime 中指定 `gfs.cache.meta-cache.enable: "true"`  来打开元数据缓存，如下
 
-在 GooseFSRuntime 中，元数据缓存默认关闭，通过元数据缓存元数据信息，可通过在 Runtime 中指定 `gfs.cache.meta-cache.enable: "true"`  来打开元数据缓存，如下
 ```yaml
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
