@@ -98,8 +98,7 @@ Dataset:
 - mountPoint：表示挂载UFS的路径，路径中不需要包含 endpoint 信息。
 - options, 在 options 需要指定桶的必要信息，具体可参考 [腾讯云 COS](https://cloud.tencent.com/document/product/436/7751):
   - fs.cos.accessKeyId/fs.cos.accessKeySecret：cos bucket的 AK 信息，有权限访问该 bucket。
-  - fs.cos.endpoint：cos bucket 的 endpoint 信息，公网或内网地址皆可，内网地址使用条件为您的 k8s 集群所在区域和 COS 区域相同。 
-    
+  
 GooseFSRuntime, 更多 API 可参考 [api_doc.md](https://github.com/fluid-cloudnative/fluid/blob/master/docs/en/dev/api_doc.md):
 - replicas：表示创建 GooseFS 集群节点的数量。
 - mediumtype： GooseFS 支持 HDD/SSD/MEM 三种类型缓存介质，提供多级缓存配置。

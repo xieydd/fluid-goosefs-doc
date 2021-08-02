@@ -24,14 +24,7 @@ metadata:
   name: hbase
 spec:
   mounts:
-    - mountPoint: cosn://test-bucket/
-      options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cosn.bucket.region: <COS_REGION>
-        fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
-        fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
-        fs.cos.app.id: <COS_APP_ID>
+    - mountPoint: https://mirrors.tuna.tsinghua.edu.cn/apache/hbase/stable/
   name: hbase
 ---
 apiVersion: data.fluid.io/v1alpha1
@@ -49,11 +42,10 @@ spec:
         low: "0.7"
 EOF
 ```
+TODO
+> mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
 
 在上述示例中，我们设置 `GooseFSRuntime.spec.replicas` 为1，这意味着我们将启动一个带有一个 Worker 节点的 GooseFS 集群来缓存数据集中的数据。
-
-COS_REGION 是创建的存储桶的地区，例如 ap-shanghai。<COS_APP_ID>、<COS_ACCESS_KEY_SECRET> 以及 <COS_ACCESS_KEY_ID> 可以在
-腾讯云控制台->访问管理->访问密钥-> API 密钥管理中进行查看
 
 ```shell
 $ kubectl create -f dataset.yaml

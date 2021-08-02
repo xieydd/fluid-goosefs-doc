@@ -13,7 +13,6 @@ goosefsruntime-controller-5b64fdbbb-84pc6   1/1     Running   0          8h
 csi-nodeplugin-fluid-fwgjh                  2/2     Running   0          8h
 csi-nodeplugin-fluid-ll8bq                  2/2     Running   0          8h
 dataset-controller-5b7848dbbb-n44dj         1/1     Running   0          8h
-goosefsruntime-controller-654fb74447-cldsv    1/1     Running   0          8h
 ```
 
 通常来说，你会看到一个名为 `dataset-controller` 的 Pod、一个名为 `goosefsruntime-controller` 的 Pod 和多个名为 `csi-nodeplugin`
@@ -33,14 +32,14 @@ $ cd <any-path>/co-locality
 ```shell
 $ kubectl get nodes
 NAME                       STATUS   ROLES    AGE     VERSION
-cn-beijing.192.168.1.146   Ready    <none>   7d14h   v1.16.9-aliyun.1
-cn-beijing.192.168.1.147   Ready    <none>   7d14h   v1.16.9-aliyun.1
+192.168.1.146   Ready    <none>   7d14h   v1.18.4-tke.13
+192.168.1.147   Ready    <none>   7d14h   v1.18.4-tke.13
 ```
 
 **使用标签标识结点**
 
 ```shell
-$ kubectl label nodes cn-beijing.192.168.1.146 hbase-cache=true
+$ kubectl label nodes 192.168.1.146 hbase-cache=true
 ```
 
 在接下来的步骤中，我们将使用 `NodeSelector` 来管理集群中存放数据的位置，所以在这里标记期望的结点
@@ -50,8 +49,8 @@ $ kubectl label nodes cn-beijing.192.168.1.146 hbase-cache=true
 ```shell
 $ kubectl get node -L hbase-cache
 NAME                       STATUS   ROLES    AGE     VERSION            HBASE-CACHE
-ap-beijing.192.168.1.146   Ready    <none>   7d14h   v1.16.9-aliyun.1   true
-ap-beijing.192.168.1.147   Ready    <none>   7d14h   v1.16.9-aliyun.1
+ap-beijing.192.168.1.146   Ready    <none>   7d14h   v1.18.4-tke.13   true
+ap-beijing.192.168.1.147   Ready    <none>   7d14h   v1.18.4-tke.13
 ```
 
 目前，在全部2个结点中，仅有一个结点添加了 `hbase-cache=true` 的标签，接下来，我们希望数据缓存仅会被放置在该结点之上
@@ -65,16 +64,11 @@ metadata:
   name: hbase
 spec:
   mounts:
-    - mountPoint: cosn://test-bucket/
-      options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cosn.bucket.region: <COS_REGION>
-        fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
-        fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
-        fs.cos.app.id: <COS_APP_ID>
+    - mountPoint: https://mirrors.tuna.tsinghua.edu.cn/apache/hbase/stable/
       name: hbase
 ```
+TODO
+> mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
 
 **创建 Dataset 资源对象**
 
