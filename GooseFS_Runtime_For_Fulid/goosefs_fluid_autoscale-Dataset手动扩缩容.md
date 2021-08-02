@@ -1,27 +1,20 @@
 ## 前提条件
 
-
 - [Fluid](https://github.com/fluid-cloudnative/fluid)(version >= 0.5.0)
 
-
-
-请参考[Fluid安装文档](https://github.com/fluid-cloudnative/fluid/blob/master/docs/zh/userguide/install.md)完成安装。
-
+// TODO
+- 请参考[安装文档](../Introduction/goosefs_fluid_install-安装文档.md)完成安装
 
 ## 新建工作环境
-
 
 ```shell
 $ mkdir <any-path>/dataset_scale
 $ cd <any-path>/dataset_scale
 ```
 
-
 ## 运行示例
 
-
-**创建Dataset和GooseFSRuntime资源对象**
-
+**创建 Dataset 和 GooseFSRuntime 资源对象**
 
 ```yaml
 $ cat << EOF > dataset.yaml
@@ -31,12 +24,15 @@ metadata:
   name: hbase
 spec:
   mounts:
-    - mountPoint: cos://test-bucket/
+    - mountPoint: cosn://test-bucket/
       options:
         fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
         fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cos.endpoint: <COS_ENDPOINT> 
-      name: hbase
+        fs.cosn.bucket.region: <COS_REGION>
+        fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
+        fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
+        fs.cos.app.id: <COS_APP_ID>
+  name: hbase
 ---
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
@@ -54,9 +50,10 @@ spec:
 EOF
 ```
 
+在上述示例中，我们设置 `GooseFSRuntime.spec.replicas` 为1，这意味着我们将启动一个带有一个 Worker 节点的 GooseFS 集群来缓存数据集中的数据。
 
-在上述示例中，我们设置`GooseFSRuntime.spec.replicas`为1，这意味着我们将启动一个带有一个Worker的GooseFS集群来缓存数据集中的数据。
-
+COS_REGION 是创建的存储桶的地区，例如 ap-shanghai。<COS_APP_ID>、<COS_ACCESS_KEY_SECRET> 以及 <COS_ACCESS_KEY_ID> 可以在
+腾讯云控制台->访问管理->访问密钥-> API 密钥管理中进行查看
 
 ```shell
 $ kubectl create -f dataset.yaml
@@ -64,34 +61,27 @@ dataset.data.fluid.io/hbase created
 goosefsruntime.data.fluid.io/hbase created
 ```
 
+待 GooseFS 集群正常启动后，可以看到此时创建出来的 Dataset 以及 GooseFSRuntime 处于如下状态：
 
-待GooseFS集群正常启动后，可以看到此时创建出来的Dataset以及GooseFSRuntime处于如下状态：
-
-
-GooseFS各组件运行状态：
-
+GooseFS 各组件运行状态：
 
 ```shell
 $ kubectl get pod
 NAME                 READY   STATUS    RESTARTS   AGE
-hbase-goosefs-fuse-6pcnc     1/1     Running   0          3m15s
-hbase-goosefs-master-0       2/2     Running   0          3m50s
-hbase-goosefs-worker-w9wxh   2/2     Running   0          3m15s
+hbase-fuse-6pcnc     1/1     Running   0          3m15s
+hbase-master-0       2/2     Running   0          3m50s
+hbase-worker-w9wxh   2/2     Running   0          3m15s
 ```
 
+Dataset 状态：
 
-Dataset状态：
-
-
-```
+```shell
 $ kubectl get dataset hbase
 NAME    UFS TOTAL SIZE   CACHED   CACHE CAPACITY   CACHED PERCENTAGE   PHASE   AGE
 hbase   544.77MiB        0.00B    2.00GiB          0.0%                Bound   3m28s
 ```
 
-
-GooseFSRuntime状态：
-
+GooseFSRuntime 状态：
 
 ```shell
 $ kubectl get goosefsruntime hbase -o wide
@@ -99,45 +89,36 @@ NAME    READY MASTERS   DESIRED MASTERS   MASTER PHASE   READY WORKERS   DESIRED
 hbase   1               1                 Ready          1               1                 Ready          1             1               Ready        4m55s
 ```
 
-
-**Dataset扩容**
-
+**Dataset 扩容**
 
 ```shell
 $ kubectl scale goosefsruntime hbase --replicas=2
 goosefsruntime.data.fluid.io/hbase scaled
 ```
 
+直接使用 `kubectl scale` 命令即可完成 Dataset 的扩容操作。在成功执行上述命令并等待一段时间后可以看到 Dataset 以及 GooseFSRuntime 的状态均发生了变化：
 
-直接使用`kubectl scale`命令即可完成Dataset的扩容操作。在成功执行上述命令并等待一段时间后可以看到Dataset以及GooseFSRuntime的状态均发生了变化：
-
-
-一个新的GooseFS Worker以及对应的GooseFS Fuse组件成功启动：
-
+一个新的 GooseFS Worker 以及对应的 GooseFS Fuse 组件成功启动：
 
 ```shell
 $ kubectl get pod
 NAME                 READY   STATUS    RESTARTS   AGE
-hbase-goosefs-fuse-6pcnc     1/1     Running   0          13m
-hbase-goosefs-fuse-8qgww     1/1     Running   0          6m49s
-hbase-goosefs-master-0       2/2     Running   0          13m
-hbase-goosefs-worker-l4c8n   2/2     Running   0          6m49s
-hbase-goosefs-worker-w9wxh   2/2     Running   0          13m
+hbase-fuse-6pcnc     1/1     Running   0          13m
+hbase-fuse-8qgww     1/1     Running   0          6m49s
+hbase-master-0       2/2     Running   0          13m
+hbase-worker-l4c8n   2/2     Running   0          6m49s
+hbase-worker-w9wxh   2/2     Running   0          13m
 ```
 
+Dataset 中的 `Cache Capacity` 从原来的 `2.00GiB` 变为 `4.00GiB`，表明该 Dataset 的可用缓存容量增加：
 
-Dataset中的`Cache Capacity`从原来的`2.00GiB`变为`4.00GiB`，表明该Dataset的可用缓存容量增加：
-
-
-```
+```shell
 $ kubectl get dataset hbase
 NAME    UFS TOTAL SIZE   CACHED   CACHE CAPACITY   CACHED PERCENTAGE   PHASE   AGE
 hbase   544.77MiB        0.00B    4.00GiB          0.0%                Bound   15m
 ```
 
-
-GooseFSRuntime中的`Ready Workers`以及`Ready Fuses`属性均变为2：
-
+GooseFSRuntime 中的 `Ready Workers` 以及 `Ready Fuses` 属性均变为 2：
 
 ```shell
 $ kubectl get goosefsruntime hbase -o wide
@@ -145,9 +126,7 @@ NAME    READY MASTERS   DESIRED MASTERS   MASTER PHASE   READY WORKERS   DESIRED
 hbase   1               1                 Ready          2               2                 Ready          2             2               Ready        17m
 ```
 
-
-查看GooseFSRuntime的具体描述信息可以了解最新的扩缩容信息：
-
+查看 GooseFSRuntime 的具体描述信息可以了解最新的扩缩容信息：
 
 ```shell
 $ kubectl describe goosefsruntime hbase
@@ -173,61 +152,49 @@ Events:
   Normal  Succeed  2m2s  GooseFSRuntime  GooseFS runtime scaled out. current replicas: 2, desired replicas: 2.
 ```
 
+**Dataset 缩容**
 
-**Dataset缩容**
-
-
-与扩容类似，缩容时同样可以使用`kubectl scale`对Runtime的Worker数量进行调整：
-
+与扩容类似，缩容时同样可以使用 `kubectl scale` 对 Runtime 的 Worker 数量进行调整：
 
 ```shell
 $ kubectl scale goosefsruntime hbase --replicas=1
 goosefsruntime.data.fluid.io/hbase scaled
 ```
 
+成功执行上述命令后，**如果目前环境中没有应用正在尝试访问该数据集**，那么就会触发 Runtime 的缩容。
 
-成功执行上述命令后，**如果目前环境中没有应用正在尝试访问该数据集**，那么就会触发Runtime的缩容。
-
-
-超出指定`replicas`数量的Runtime Worker将会被停止：
-
+超出指定 `replicas` 数量的 Runtime Worke r将会被停止：
 
 ```shell
 NAME                 READY   STATUS        RESTARTS   AGE
-hbase-goosefs-fuse-8qgww     1/1     Running       0          21m
-hbase-goosefs-fuse-zql96     1/1     Terminating   0          17m32s
-hbase-goosefs-master-0       2/2     Running       0          22m
-hbase-goosefs-worker-f92vv   2/2     Terminating   0          17m32s
-hbase-goosefs-worker-l4c8n   2/2     Running       0          21m
+hbase-fuse-8qgww     1/1     Running       0          21m
+hbase-fuse-zql96     1/1     Terminating   0          17m32s
+hbase-master-0       2/2     Running       0          22m
+hbase-worker-f92vv   2/2     Terminating   0          17m32s
+hbase-worker-l4c8n   2/2     Running       0          21m
 ```
 
+Dataset 的缓存容量(`Cache Capacity`)恢复到`2.00GiB`:
 
-Dataset的缓存容量(`Cache Capacity`)恢复到`2.00GiB`:
-
-
-```
+```shell
 $ kubectl get dataset hbase
 NAME    UFS TOTAL SIZE   CACHED   CACHE CAPACITY   CACHED PERCENTAGE   PHASE   AGE
 hbase   544.77MiB        0.00B    2.00GiB          0.0%                Bound   30m
 ```
 
-
-> 注意：在目前版本的Fluid中，缩容时Dataset中`Cache Capacity`属性字段的变化存在几分钟的延迟，因此您可能无法迅速观察到这一属性的变化
-
+> 注意：在目前版本的 Fluid 中，缩容时 Dataset 中 `Cache Capacity` 属性字段的变化存在几分钟的延迟，因此您可能无法迅速观察到这一属性的变化
 
 
-GooseFSRuntime中的`Ready Workers`以及`Ready Fuses`字段同样变为`1`：
 
+GooseFSRuntime 中的 `Ready Workers` 以及 `Ready Fuses` 字段同样变为 `1`：
 
-```
+```shell
 $ kubectl get goosefsruntime hbase -o wide
 NAME    READY MASTERS   DESIRED MASTERS   MASTER PHASE   READY WORKERS   DESIRED WORKERS   WORKER PHASE   READY FUSES   DESIRED FUSES   FUSE PHASE   AGE
 hbase   1               1                 Ready          1               1                 Ready          1             1               Ready        30m
 ```
 
-
-查看GooseFSRuntime的具体描述信息可以了解最新的扩缩容信息：
-
+查看 GooseFSRuntime 的具体描述信息可以了解最新的扩缩容信息：
 
 ```shell
 $ kubectl describe goosefsruntime hbase
@@ -254,12 +221,9 @@ Events:
   Normal   Succeed              4s     GooseFSRuntime  GooseFS runtime scaled in. current replicas: 1, desired replicas: 1.
 ```
 
-
-Fluid提供的这种扩缩容能力能够帮助用户或是集群管理员适时地调整数据集缓存所占用的集群资源，减少某个不频繁使用的数据集的缓存容量（缩容），或者按需增加某数据集的缓存容量（扩容），以实现更加精细的资源分配，提高资源利用率。
-
+Fluid 提供的这种扩缩容能力能够帮助用户或是集群管理员适时地调整数据集缓存所占用的集群资源，减少某个不频繁使用的数据集的缓存容量（缩容），或者按需增加某数据集的缓存容量（扩容），以实现更加精细的资源分配，提高资源利用率。
 
 ## 环境清理
-
 
 ```shell
 $ kubectl delete -f dataset.yaml
