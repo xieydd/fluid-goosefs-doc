@@ -8,8 +8,8 @@
 $ kubectl create ns fluid-system
 ```
 
-
-### 2、下载 [fluid-0.6.0.tgz](http://smartdata-binary.cos-ap-shanghai.aliyuncs.com/fluid/360/fluid-0.6.0.tgz)
+TODO
+### 2、下载 [fluid-0.6.0.tgz]()
 
 
 ### 3、使用 Helm 安装 Fluid
@@ -40,13 +40,17 @@ goosefsruntime-controller-654fb74447-cldsv     1/1     Running   0          108s
 runtime:
   mountRoot: /runtime-mnt
   goosefs:
-    enabled: true
-    smartdata:
-      image: registry.ap-shanghai.aliyuncs.com/goosefsfs/smartdata:3.5.0
-    fuse:
-      image: registry.ap-shanghai.aliyuncs.com/goosefsfs/goosefs-fuse:3.5.0
+    runtimeWorkers: 3
+    portRange: 26000-32000
+    enabled: false
+    init:
+      image: fluidcloudnative/init-users:v0.6.0-116a5be
     controller:
-      image: registry.ap-shanghai.aliyuncs.com/goosefsfs/goosefsruntime-controller:v0.6.0-d90f9e5
+      image: fluidcloudnative/goosefsruntime-controller:v0.6.0-116a5be
+    runtime:
+      image: ccr.ccs.tencentyun.com/goosefs/goosefs:v1.0.1
+    fuse:
+      image: ccr.ccs.tencentyun.com/goosefs/goosefs-fuse:v1.0.1
 ```
 
 
@@ -62,14 +66,12 @@ helm upgrade --install fluid fluid-0.6.0.tgz
 
 
 ```shell
-$ hdfscache kubectl get crd      
+$ kubectl get crd      
 NAME                                             CREATED AT
-goosefsdataloads.data.fluid.io                   2021-03-26T09:05:01Z
-goosefsruntimes.data.fluid.io                    2021-03-26T09:05:01Z
-databackups.data.fluid.io                        2021-03-26T09:05:01Z
-dataloads.data.fluid.io                          2021-03-26T09:05:01Z
-datasets.data.fluid.io                           2021-03-26T09:05:01Z
-goosefsruntimes.data.fluid.io                      2021-03-31T02:30:29Z
+databackups.data.fluid.io                        2021-03-02T13:12:31Z
+dataloads.data.fluid.io                          2021-04-14T11:14:58Z
+datasets.data.fluid.io                           2021-03-02T13:12:31Z
+goosefsruntimes.data.fluid.io                    2021-04-13T13:31:38Z
 ```
 
 
@@ -84,12 +86,13 @@ kubectl delete crd goosefsruntimes.data.fluid.io
 ```shell
 $ ls -l fluid/
 total 32
--rw-r--r--  1 frank  staff   489B  3 31 10:27 CHANGELOG.md
--rw-r--r--  1 frank  staff   270B  3 31 10:27 Chart.yaml
--rw-r--r--  1 frank  staff   2.1K  3 31 10:27 VERSION
-drwxr-xr-x  8 frank  staff   256B  3 31 10:29 crds
-drwxr-xr-x  6 frank  staff   192B  3 31 10:29 templates
--rw-r--r--  1 frank  staff   1.2K  3 31 13:18 values.yaml
+total 32
+-rw-r--r--  1 xieydd  staff   489  5 15 16:14 CHANGELOG.md
+-rw-r--r--  1 xieydd  staff  1061  7 22 00:08 Chart.yaml
+-rw-r--r--  1 xieydd  staff  2560  5 15 16:14 VERSION
+drwxr-xr-x  8 xieydd  staff   256  7 20 15:06 crds
+drwxr-xr-x  7 xieydd  staff   224  5 24 14:18 templates
+-rw-r--r--  1 xieydd  staff  1665  7 22 00:08 values.yaml
 ```
 
 创建新的crd

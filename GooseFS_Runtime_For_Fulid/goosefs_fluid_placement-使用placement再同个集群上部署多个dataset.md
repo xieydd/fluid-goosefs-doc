@@ -1,10 +1,10 @@
-通过GooseFS和[Fuse](https://github.com/libfuse/libfuse)，Fluid为用户提供了一种更为简单的文件访问接口，使得任意运行在Kubernetes集群上的程序能够像访问本地文件一样轻松访问存储在远程文件系统中的文件。Fluid 针对数据集进行全生命周期的管理和隔离，尤其对于短生命周期应用（e.g 数据分析任务、机器学习任务），用户可以在集群中大规模部署。
+通过 GooseFS 和 [Fuse](https://github.com/libfuse/libfuse)，Fluid 为用户提供了一种更为简单的文件访问接口，使得任意运行在 Kubernetes 集群上的程序能够像访问本地文件一样轻松访问存储在远程文件系统中的文件。Fluid 针对数据集进行全生命周期的管理和隔离，尤其对于短生命周期应用（e.g 数据分析任务、机器学习任务），用户可以在集群中大规模部署。
 
 
 本文档通过一个简单的例子演示了上述功能特性
 ## 前提条件
 
-
+TODO
 在运行该示例之前，请参考[安装文档]()完成安装完成安装，并检查Fluid各组件正常运行：
 
 
@@ -15,24 +15,18 @@ goosefsruntime-controller-5b64fdbbb-84pc6   1/1     Running   0          8h
 csi-nodeplugin-fluid-fwgjh                  2/2     Running   0          8h
 csi-nodeplugin-fluid-ll8bq                  2/2     Running   0          8h
 dataset-controller-5b7848dbbb-n44dj         1/1     Running   0          8h
-goosefsruntime-controller-654fb74447-cldsv    1/1     Running   0          8h
 ```
 
 
-通常来说，你会看到一个名为`dataset-controller`的Pod、一个名为`goosefsruntime-controller`的Pod和多个名为`csi-nodeplugin`的Pod正在运行。其中，`csi-nodeplugin`这些Pod的数量取决于你的Kubernetes集群中结点的数量。
+通常来说，你会看到一个名为`dataset-controller`的 Pod、一个名为`goosefsruntime-controller`的 Pod 和多个名为`csi-nodeplugin`的 Pod 正在运行。其中，`csi-nodeplugin`这些Pod的数量取决于你的 Kubernetes 集群中结点的数量。
 
 
 ## 运行示例
-
-
 **对某个节点打标签**
 
-
 ```shell
-$ kubectl  label node ap-beijing.192.168.0.199 fluid=multi-dataset
+$ kubectl  label node 192.168.0.199 fluid=multi-dataset
 ```
-
-
 > 在接下来的步骤中，我们将使用 `NodeSelector` 来管理Dataset调度的节点，这里仅做试验使用。
 
 
@@ -47,11 +41,7 @@ metadata:
   name: hbase
 spec:
   mounts:
-    - mountPoint: cos://test-bucket/
-      options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cos.endpoint: <COS_ENDPOINT> 
+    - mountPoint: https://mirrors.tuna.tsinghua.edu.cn/apache/hbase/stable/
       name: hbase
   nodeAffinity:
     required:
@@ -73,11 +63,7 @@ metadata:
   name: spark
 spec:
   mounts:
-    - mountPoint: - mountPoint: cos://test-bucket-1/
-      options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cos.endpoint: <COS_ENDPOINT> 
+    - mountPoint: https://mirrors.bit.edu.cn/apache/spark/
       name: spark
   nodeAffinity:
     required:
@@ -89,11 +75,10 @@ spec:
                 - "multi-dataset"
   placement: "Shared" 
 ```
-
+TODO
+> mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
 
 **创建Dataset资源对象**
-
-
 ```shell
 $ kubectl apply -f dataset.yaml
 dataset.data.fluid.io/hbase created
@@ -103,21 +88,16 @@ dataset.data.fluid.io/spark created
 
 
 **查看Dataset资源对象状态**
-
-
 ```shell
 $ kubectl get dataset
 NAME    UFS TOTAL SIZE   CACHED   CACHE CAPACITY   CACHED PERCENTAGE   PHASE      AGE
 hbase                                                                  NotBound   6s
 spark                                                                  NotBound   4s
 ```
-
-
 如上所示，`status`中的`phase`属性值为`NotBound`，这意味着该`Dataset`资源对象目前还未与任何`GooseFSRuntime`资源对象绑定，接下来，我们将创建一个`GooseFSRuntime`资源对象。
 
 
 **查看待创建的GooseFSRuntime资源对象**
-
 - runtime.yaml
 ```yaml
 apiVersion: data.fluid.io/v1alpha1
@@ -154,28 +134,23 @@ spec:
 ```
 
 
-**创建GooseFSRuntime资源对象**
-
-
+**创建 GooseFSRuntime 资源对象**
 ```shell
 $ kubectl create -f runtime.yaml
-jindoruntime.data.fluid.io/hbase created
+goosefsruntime.data.fluid.io/hbase created
 
 # 等待 Dataset hbase 全部组件 Running 
 $ kubectl get pod -o wide | grep hbase
 NAME                              READY   STATUS    RESTARTS   AGE   IP              NODE                       NOMINATED NODE   READINESS GATES
-hbase-goosefs-fuse-jl2g2           1/1     Running   0          2m24s   192.168.0.199   cn-beijing.192.168.0.199   <none>           <none>
-hbase-goosefs-master-0             2/2     Running   0          2m55s   192.168.0.200   cn-beijing.192.168.0.200   <none>           <none>
-hbase-goosefs-worker-g89p8         2/2     Running   0          2m24s   192.168.0.199   ap-beijing.192.168.0.199   <none>           <none>
+hbase-fuse-jl2g2           1/1     Running   0          2m24s   192.168.0.199   192.168.0.199   <none>           <none>
+hbase-master-0             2/2     Running   0          2m55s   192.168.0.200   192.168.0.200   <none>           <none>
+hbase-worker-g89p8         2/2     Running   0          2m24s   192.168.0.199   192.168.0.199   <none>           <none>
 
 $ kubectl create -f runtime1.yaml
-jindoruntime.data.fluid.io/spark created
+goosefsruntime.data.fluid.io/spark created
 ```
 
-
 **检查GooseFSRuntime资源对象是否已经创建**
-
-
 ```shell
 $ kubectl get goosefsruntime
 NAME    MASTER PHASE   WORKER PHASE   FUSE PHASE   AGE
@@ -183,31 +158,25 @@ hbase   Ready          Ready          Ready        2m14s
 spark   Ready          Ready          Ready        58s
 ```
 
+`GooseFSRuntime`是另一个 Fluid 定义的 CRD。一个 `GooseFSRuntime` 资源对象描述了在 Kubernetes 集群中运行一个 GooseFS 实例所需要的配置信息。
 
-`GooseFSRuntime`是另一个Fluid定义的CRD。一个`GooseFSRuntime`资源对象描述了在Kubernetes集群中运行一个GooseFS实例所需要的配置信息。
 
-
-等待一段时间，让GooseFSRuntime资源对象中的各个组件得以顺利启动，你会看到类似以下状态：
+等待一段时间，让 GooseFSRuntime 资源对象中的各个组件得以顺利启动，你会看到类似以下状态：
 
 
 ```shell
 $ kubectl get pod -o wide
 NAME                        READY   STATUS    RESTARTS   AGE     IP              NODE                       NOMINATED NODE   READINESS GATES
-hbase-goosefs-fuse-jl2g2     1/1     Running   0          2m24s   192.168.0.199   ap-beijing.192.168.0.199   <none>           <none>
-hbase-goosefs-master-0       2/2     Running   0          2m55s   192.168.0.200   ap-beijing.192.168.0.200   <none>           <none>
-hbase-goosefs-worker-g89p8   2/2     Running   0          2m24s   192.168.0.199   ap-beijing.192.168.0.199   <none>           <none>
-spark-goosefs-fuse-5z49p     1/1     Running   0          19s     192.168.0.199   ap-beijing.192.168.0.199   <none>           <none>
-spark-goosefs-master-0       2/2     Running   0          50s     192.168.0.200   ap-beijing.192.168.0.200   <none>           <none>
-spark-goosefs-worker-96ksn   2/2     Running   0          19s     192.168.0.199   ap-beijing.192.168.0.199   <none>           <none>
+hbase-fuse-jl2g2     1/1     Running   0          2m24s   192.168.0.199   192.168.0.199   <none>           <none>
+hbase-master-0       2/2     Running   0          2m55s   192.168.0.200   192.168.0.200   <none>           <none>
+hbase-worker-g89p8   2/2     Running   0          2m24s   192.168.0.199   192.168.0.199   <none>           <none>
+spark-fuse-5z49p     1/1     Running   0          19s     192.168.0.199   192.168.0.199   <none>           <none>
+spark-master-0       2/2     Running   0          50s     192.168.0.200   192.168.0.200   <none>           <none>
+spark-worker-96ksn   2/2     Running   0          19s     192.168.0.199   192.168.0.199   <none>           <none>
 ```
-
-
-注意上面的不同的 Dataset 的 worker 和 fuse 组件可以正常的调度到相同的节点 `ap-beijing.192.168.0.199`。
-
+注意上面的不同的 Dataset 的 worker 和 fuse 组件可以正常的调度到相同的节点 `192.168.0.199`。
 
 **再次查看Dataset资源对象状态**
-
-
 ```shell
 $ kubectl get dataset 
 NAME    UFS TOTAL SIZE   CACHED   CACHE CAPACITY   CACHED PERCENTAGE   PHASE   AGE
@@ -215,34 +184,25 @@ hbase   443.89MiB        0.00B    2.00GiB          0.0%                Bound   1
 spark   1.92GiB          0.00B    4.00GiB          0.0%                Bound   9m38s
 ```
 
-
-因为已经与一个成功启动的GooseFSRuntime绑定，该Dataset资源对象的状态得到了更新，此时`PHASE`属性值已经变为`Bound`状态。通过上述命令可以获知有关资源对象的基本信息
+因为已经与一个成功启动的 GooseFSRuntime 绑定，该 Dataset 资源对象的状态得到了更新，此时 `PHASE` 属性值已经变为 `Bound` 状态。通过上述命令可以获知有关资源对象的基本信息
 
 
 **查看GooseFSRuntime状态**
-
-
 ```shell
 $ kubectl get goosefsruntime -o wide
 NAME    READY MASTERS   DESIRED MASTERS   MASTER PHASE   READY WORKERS   DESIRED WORKERS   WORKER PHASE   READY FUSES   DESIRED FUSES   FUSE PHASE   AGE
 hbase   1               1                 Ready          1               1                 Ready          1             1               Ready        11m
 spark   1               1                 Ready          1               1                 Ready          1             1               Ready        9m52s
 ```
-
-
 `GooseFSRuntime`资源对象的`status`中包含了更多更详细的信息
 
-
-**查看与远程文件关联的PersistentVolume以及PersistentVolumeClaim**
-
-
+**查看与远程文件关联的 PersistentVolume 以及 PersistentVolumeClaim**
 ```shell
 $ kubectl get pv
 NAME    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM           STORAGECLASS   REASON   AGE
 hbase   100Gi      RWX            Retain           Bound    default/hbase                           4m55s
 spark   100Gi      RWX            Retain           Bound    default/spark                           51s
 ```
-
 
 ```shell
 $ kubectl get pvc
@@ -251,12 +211,9 @@ hbase   Bound    hbase    100Gi      RWX                           4m57s
 spark   Bound    spark    100Gi      RWX                           53s
 ```
 
-
-`Dataset`资源对象准备完成后（即与GooseFS实例绑定后），与该资源对象关联的PV, PVC已经由Fluid生成，应用可以通过该PVC完成远程文件在Pod中的挂载，并通过挂载目录实现远程文件访问
-
+`Dataset`资源对象准备完成后（即与 GooseFS 实例绑定后），与该资源对象关联的 PV, PVC 已经由 Fluid 生成，应用可以通过该 PVC 完成远程文件在Pod中的挂载，并通过挂载目录实现远程文件访问。
 
 ## 远程文件访问
-
 
 **查看待创建的应用**
 
@@ -278,7 +235,7 @@ spec:
     - name: hbase-vol
       persistentVolumeClaim:
         claimName: hbase
-  nodeName: ap-beijing.192.168.0.199
+  nodeName: 192.168.0.199
 ```
 
 - nginx1.yaml
@@ -299,29 +256,23 @@ spec:
     - name: hbase-vol
       persistentVolumeClaim:
         claimName: spark
-  nodeName: ap-beijing.192.168.0.199
+  nodeName: 192.168.0.199
 ```
 
 
 **启动应用进行远程文件访问**
-
-
 ```shell
 $ kubectl create -f nginx.yaml
 $ kubectl create -f nginx1.yaml
 ```
 
-
 登录Nginx hbase Pod:
-
 
 ```shell
 $ kubectl exec -it nginx-hbase -- bash
 ```
 
-
 查看远程文件挂载情况：
-
 
 ```shell
 $ ls -lh /data/hbase
@@ -334,18 +285,12 @@ total 444M
 -r--r----- 1 root root  34M Sep 16 00:53 hbase-2.2.6-src.tar.gz
 ```
 
-
 登录Nginx spark Pod:
-
-
 ```shell
 $ kubectl exec -it nginx-spark -- bash
 ```
 
-
 查看远程文件挂载情况：
-
-
 ```shell
 $ ls -lh /data/spark/
 total 1.0K
@@ -357,26 +302,19 @@ $ du -h /data/spark/
 2.0G	/data/spark/
 ```
 
-
 登出Nginx Pod:
-
 
 ```shell
 $ exit
 ```
 
-
 正如你所见，WebUFS上所存储的全部文件,可以和本地文件完全没有区别的方式存在于某个Pod中，并且可以被该Pod十分方便地访问
-
 
 ## 远程文件访问加速
 
-
 为了演示在访问远程文件时，你能获得多大的加速效果，我们提供了一个测试作业的样例:
 
-
 **查看待创建的测试作业**
-
 - app.yaml
 ```yaml
 apiVersion: batch/v1
@@ -399,7 +337,7 @@ spec:
         - name: hbase-vol
           persistentVolumeClaim:
             claimName: hbase
-      nodeName: ap-beijing.192.168.0.199
+      nodeName: 192.168.0.199
 ```
 
 - app1.yaml
@@ -425,7 +363,7 @@ spec:
         - name: spark-vol
           persistentVolumeClaim:
             claimName: spark
-      nodeName: ap-beijing.192.168.0.199
+      nodeName: 192.168.0.199
 ```
 
 
@@ -439,29 +377,21 @@ $ kubectl create -f app1.yaml
 job.batch/fluid-copy-test-spark created
 ```
 
-
 hbase任务程序会执行`time cp -r /data/hbase ./`的shell命令，其中`/data/hbase`是远程文件在Pod中挂载的位置，该命令完成后会在终端显示命令执行的时长。
-
 
 spark任务程序会执行`time cp -r /data/spark ./`的shell命令，其中`/data/spark`是远程文件在Pod中挂载的位置，该命令完成后会在终端显示命令执行的时长。
 
-
 等待一段时间,待该作业运行完成,作业的运行状态可通过以下命令查看:
-
 
 ```shell
 $ kubectl get pod -o wide | grep copy 
-fluid-copy-test-hbase-r8gxp   0/1     Completed   0          4m16s   172.29.0.135    ap-beijing.192.168.0.199   <none>           <none>
-fluid-copy-test-spark-54q8m   0/1     Completed   0          4m14s   172.29.0.136    ap-beijing.192.168.0.199   <none>           <none>
+fluid-copy-test-hbase-r8gxp   0/1     Completed   0          4m16s   172.29.0.135    192.168.0.199   <none>           <none>
+fluid-copy-test-spark-54q8m   0/1     Completed   0          4m14s   172.29.0.136    192.168.0.199   <none>           <none>
 ```
-
 
 如果看到如上结果,则说明该作业已经运行完成
 
-
 > 注意: `fluid-copy-test-hbase-r8gxp`中的`r8gxp`为作业生成的标识,在你的环境中,这个标识可能不同,接下来的命令中涉及该标识的地方请以你的环境为准
-
-
 
 **查看测试作业完成时间**
 
@@ -507,16 +437,13 @@ $ kubectl delete -f app1.yaml
 $ kubectl create -f app1.yaml
 ```
 
-
 由于远程文件已经被缓存，此次测试作业能够迅速完成：
-
 
 ```shell
 $ kubectl get pod -o wide| grep fluid
-fluid-copy-test-hbase-sf5md   0/1     Completed   0          53s   172.29.0.137    ap-beijing.192.168.0.199   <none>           <none>
-fluid-copy-test-spark-fwp57   0/1     Completed   0          51s   172.29.0.138    ap-beijing.192.168.0.199   <none>           <none>
+fluid-copy-test-hbase-sf5md   0/1     Completed   0          53s   172.29.0.137    192.168.0.199   <none>           <none>
+fluid-copy-test-spark-fwp57   0/1     Completed   0          51s   172.29.0.138    192.168.0.199   <none>           <none>
 ```
-
 
 ```shell
 $ kubectl  logs fluid-copy-test-hbase-sf5md
@@ -531,15 +458,12 @@ user    0m 0.00s
 sys     0m 1.57s
 ```
 
-
 同样的文件访问操，hbase仅耗费了0.36s，spark仅耗费了1.57s。
 
-
 这种大幅度的加速效果归因于GooseFS所提供的强大的缓存能力，这种缓存能力意味着，只要你访问某个远程文件一次，该文件就会被缓存在GooseFS中，你的所有接下来的重复访问都不再需要进行远程文件读取，而是从GooseFS中直接获取数据，因此对于数据的访问加速也就不难解释了。
+
 ## 环境清理
-
-
 ```shell
 $ kubectl delete -f .
-$ kubectl label node ap-beijing.192.168.0.199 fluid-
+$ kubectl label node 192.168.0.199 fluid-
 ```
