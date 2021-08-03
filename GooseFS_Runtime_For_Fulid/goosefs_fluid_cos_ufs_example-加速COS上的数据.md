@@ -20,8 +20,8 @@ spec:
   mounts:
     - mountPoint: cosn://test-bucket/
       options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
+        fs.cosn.userinfo.secretId: <COS_ACCESS_KEY_ID>
+        fs.cosn.userinfo.secretKey: <COS_ACCESS_KEY_SECRET>
         fs.cosn.bucket.region: <COS_REGION>
         fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
         fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
@@ -51,8 +51,8 @@ kind: Secret
 metadata:
   name: mysecret
 stringData:
-  fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-  fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
+  fs.cosn.userinfo.secretId: <COS_ACCESS_KEY_ID>
+  fs.cosn.userinfo.secretKey: <COS_ACCESS_KEY_SECRET>
 ---
 apiVersion: data.fluid.io/v1alpha1
 kind: Dataset
@@ -68,16 +68,16 @@ spec:
         fs.cos.app.id: <COS_APP_ID>
       name: hadoop
       encryptOptions:
-        - name: fs.cos.accessKeyId
+        - name: fs.cosn.userinfo.secretId
           valueFrom:
             secretKeyRef:
               name: mysecret
-              key: fs.cos.accessKeyId
-        - name: fs.cos.accessKeySecret
+              key: fs.cosn.userinfo.secretId
+        - name: fs.cosn.userinfo.secretKey
           valueFrom:
             secretKeyRef:
               name: mysecret
-              key: fs.cos.accessKeySecret
+              key: fs.cosn.userinfo.secretKey
 ---
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
@@ -97,7 +97,7 @@ spec:
 Dataset:
 - mountPoint：表示挂载UFS的路径，路径中不需要包含 endpoint 信息。
 - options, 在 options 需要指定桶的必要信息，具体可参考 [腾讯云 COS](https://cloud.tencent.com/document/product/436/7751):
-  - fs.cos.accessKeyId/fs.cos.accessKeySecret：cos bucket的 AK 信息，有权限访问该 bucket。
+  - fs.cosn.userinfo.secretId/fs.cosn.userinfo.secretKey：cos bucket的 AK 信息，有权限访问该 bucket。
   - fs.cos.endpoint：cos bucket 的 endpoint 信息，公网或内网地址皆可，内网地址使用条件为您的 k8s 集群所在区域和 COS 区域相同。 
     
 GooseFSRuntime, 更多 API 可参考 [api_doc.md](https://github.com/fluid-cloudnative/fluid/blob/master/docs/en/dev/api_doc.md):

@@ -13,11 +13,11 @@ kind: Secret
 metadata:
   name: mysecret
 stringData:
-  fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-  fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
+  fs.cosn.userinfo.secretId: <COS_ACCESS_KEY_ID>
+  fs.cosn.userinfo.secretKey: <COS_ACCESS_KEY_SECRET>
 ```
 
-可以看到，`fs.cos.accessKeySecret` 和 `fs.cos.accessKeyId`
+可以看到，`fs.cosn.userinfo.secretKey` 和 `fs.cosn.userinfo.secretId`
 的具体内容写在 Secret 中，Dataset 通过寻找配置中同名的 Secret 和 key 来读取对应的值，而不再是在 Dataset 直接写明，这样就保证了一些数据的安全性。
 
 ### 创建 Secret
@@ -47,16 +47,16 @@ spec:
         fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
         fs.cos.app.id: <COS_APP_ID>
       encryptOptions:
-        - name: fs.cos.accessKeyId
+        - name: fs.cosn.userinfo.secretId
           valueFrom:
             secretKeyRef:
               name: mysecret
-              key: fs.cos.accessKeyId
-        - name: fs.cos.accessKeySecret
+              key: fs.cosn.userinfo.secretId
+        - name: fs.cosn.userinfo.secretKey
           valueFrom:
             secretKeyRef:
               name: mysecret
-              key: fs.cos.accessKeySecret
+              key: fs.cosn.userinfo.secretKey
 ---
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
@@ -73,9 +73,9 @@ spec:
         low: "0.7"
 ```
 
-可以看到，在上面的配置中，与直接配置 `fs.cos.endpoint` 不同，我们把 `fs.cos.accessKeyId` 以及 `fs.cos.accessKeySecret` 的配置改为从 Secret 中读取，以此来保障安全性。
+可以看到，在上面的配置中，与直接配置 `fs.cos.endpoint` 不同，我们把 `fs.cosn.userinfo.secretId` 以及 `fs.cosn.userinfo.secretKey` 的配置改为从 Secret 中读取，以此来保障安全性。
 
-> 需要注意的是，如果在 `options` 和 `encryptOptions` 中配置了同名的键，例如都有 `fs.cos.accessKeyId` 的配置，那么 `encryptOptions` 中的值会覆盖 `options` 中对应的值的内容
+> 需要注意的是，如果在 `options` 和 `encryptOptions` 中配置了同名的键，例如都有 `fs.cosn.userinfo.secretId` 的配置，那么 `encryptOptions` 中的值会覆盖 `options` 中对应的值的内容
 
 ###  创建 Dataset 和 Runtime
 
