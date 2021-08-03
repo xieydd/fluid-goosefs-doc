@@ -34,7 +34,7 @@ $ kubectl taint nodes 192.168.1.146 hbase=true:NoSchedule
 
 **再次查看节点**
 ```shell
-$ kubectl get node 192.168.1.146 -oyaml | grep taints -A3
+$ kubectl get node 192.168.1.146 -o yaml | grep taints -A3
   taints:
   - effect: NoSchedule
     key: hbase
