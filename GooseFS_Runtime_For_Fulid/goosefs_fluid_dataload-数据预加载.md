@@ -5,8 +5,8 @@
 
 本文档通过以下两个例子演示了 DataLoad CRD 的使用方法：
 
-- [DataLoad快速使用](#DataLoad%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8)
-- [DataLoad进阶配置](#DataLoad%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE)
+- DataLoad快速使用
+- DataLoad进阶配置
 
 
 ## 前提条件
@@ -33,15 +33,8 @@ metadata:
   name: spark
 spec:
   mounts:
-    - mountPoint: cosn://test-bucket/
-      options:
-        fs.cosn.userinfo.secretId: <COS_ACCESS_KEY_ID>
-        fs.cosn.userinfo.secretKey: <COS_ACCESS_KEY_SECRET>
-        fs.cosn.bucket.region: <COS_REGION>
-        fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
-        fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
-        fs.cos.app.id: <COS_APP_ID>
-      name: hbase
+    - mountPoint: https://mirrors.bit.edu.cn/apache/spark/
+      name: spark 
 ---
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
@@ -57,6 +50,8 @@ spec:
         high: "0.8"
         low: "0.7"
 ```
+TODO
+> mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
 
 在这里，我们将要创建一个 kind 为 `Dataset` 的资源对象(Resource object)。`Dataset` 是 Fluid 所定义的一个 Custom Resource Definition(CRD)
 ，该 CRD 被用来告知 Fluid 在哪里可以找到你所需要的数据。Fluid 将该 CRD 对象中定义的 `mountPoint` 属性挂载到 GooseFS 之上。在本示例中，为了简单，我们使用 COS 进行演示。
@@ -97,7 +92,7 @@ spec:
 `spec.dataset` 指明了需要进行数据预加载的目标数据集，在该例子中，我们的数据预加载目标为 `default` 命名空间下名为 `spark` 的数据集，如果该配置与你所在的实际环境不符，请根据你的实际环境对其进行调整。
 
 **默认情况下，上述 DataLoad 配置将会尝试加载整个数据集中的全部数据**，如果你希望进行更细粒度的控制(例如：仅加载数据集下指定路径的数据)
-，请参考[DataLoad进阶配置](#DataLoad%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE)
+，请参考[DataLoad进阶配置](https://github.com/fluid-cloudnative/fluid/blob/master/docs/en/dev/api_doc.md)
 
 **创建 DataLoad 对象**
 

@@ -36,15 +36,13 @@ $ cd <any-path>/co-locality
 ```shell
 $ kubectl get nodes
 NAME                       STATUS   ROLES    AGE     VERSION
-cn-beijing.192.168.1.145   Ready    <none>   7d14h   v1.16.9-aliyun.1
-cn-beijing.192.168.1.146   Ready    <none>   7d14h   v1.16.9-aliyun.1
-cn-beijing.192.168.1.147   Ready    <none>   7d14h   v1.16.9-aliyun.1
+192.168.1.145   Ready    <none>   7d14h   v1.18.4-tke.13
+192.168.1.146   Ready    <none>   7d14h   v1.18.4-tke.13
+192.168.1.147   Ready    <none>   7d14h   v1.18.4-tke.13
 ```
 
 
 **检查待创建的Dataset资源对象**
-
-
 ```shell
 apiVersion: data.fluid.io/v1alpha1
 kind: Dataset
@@ -52,32 +50,24 @@ metadata:
   name: hbase
 spec:
   mounts:
-    - mountPoint: cos://test-bucket/
-      options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
-        fs.cos.endpoint: <COS_ENDPOINT> 
-      name: hadoop
+    - mountPoint: https://mirrors.tuna.tsinghua.edu.cn/apache/hbase/stable/
+      name: hbase
 ```
-
+TODO
+> mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
 
 **创建Dataset资源对象**
-
-
 ```shell
 $ kubectl create -f dataset.yaml
 dataset.data.fluid.io/hbase created
 ```
 
-
 **检查待创建的GooseFSRuntime资源对象**
-
-
 ```shell
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
 metadata:
-  name: hadoop
+  name: hbase
 spec:
   replicas: 3
   tieredstore:
@@ -90,8 +80,6 @@ spec:
   master:
     replicas: 3
 ```
-
-
 我们通过指定 `spec.master.replicas=3` 来开启 Raft 3 master模式，目前只支持 3 个 master形式。
 
 **创建GooseFSRuntime资源并查看状态**
@@ -103,53 +91,36 @@ goosefsruntime.data.fluid.io/hbase created
 
 $ kubectl get pod
 NAME                          READY   STATUS    RESTARTS   AGE
-hadoop-goosefs-fuse-4v9mq     1/1     Running   0          84s
-hadoop-goosefs-fuse-5kjbj     1/1     Running   0          84s
-hadoop-goosefs-fuse-tp2q2     1/1     Running   0          84s
-hadoop-goosefs-master-0       1/1     Running   0          104s
-hadoop-goosefs-master-1       1/1     Running   0          102s
-hadoop-goosefs-master-2       1/1     Running   0          100s
-hadoop-goosefs-worker-cx8x7   1/1     Running   0          84s
-hadoop-goosefs-worker-fjsr6   1/1     Running   0          84s
-hadoop-goosefs-worker-fvpgc   1/1     Running   0          84s
+hbase-fuse-4v9mq     1/1     Running   0          84s
+hbase-fuse-5kjbj     1/1     Running   0          84s
+hbase-fuse-tp2q2     1/1     Running   0          84s
+hbase-master-0       1/1     Running   0          104s
+hbase-master-1       1/1     Running   0          102s
+hbase-master-2       1/1     Running   0          100s
+hbase-worker-cx8x7   1/1     Running   0          84s
+hbase-worker-fjsr6   1/1     Running   0          84s
+hbase-worker-fvpgc   1/1     Running   0          84s
 ```
 
 
 **查看 GooseFSRuntime 状态**
-**​**
-
 ```shell
 NAME     MASTER PHASE   WORKER PHASE   FUSE PHASE   AGE
-hadoop   Ready           Ready            Ready     15m
+hbase   Ready           Ready            Ready     15m
 ```
-
 
 确认 `PHASE` 都为 Ready
 
-
 **查看 Raft 状态 leader/follower**
-**​**
 
 登陆上其中一个master的pod
-**​**
 
 ```shell
-$ kubectl exec -ti hadoop-goosefs-master-0 bash
-$ jindo gfs -metaStatus -detail
+$ kubectl exec -ti hbase-master-0 bash
+$ goosefs fs masterInfo
 ```
-
-
 可以看到 其中一个节点是 `LEADER` 其余两个是 `FOLLOWER` 
 ```shell
-==== hadoop-goosefs-master-0:18004 ====
-peer_id: 192.168.0.138:18006:0
-state: FOLLOWER
-
-==== hadoop-goosefs-master-1:18004 ====
-peer_id: 192.168.0.139:18006:0
-state: LEADER
-
-==== hadoop-goosefs-master-2:18004 ====
-peer_id: 192.168.0.140:18006:0
-state: FOLLOWER
+current leader master: hbase-master-0:26000
+All masters: [hbase-master-0:26000, hbase-master-1:26000, hbase-master-2:26000]
 ```

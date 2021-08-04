@@ -3,7 +3,7 @@
 ### 打开/关闭数据缓存
 
 在 GooseFSRuntime 中，打开数据缓存是 `goosefs.worker.ufs.instream.cache.enabled: "true"`，该属性默认为 true。
-可通过在 Runtime 中指定 `gfs.cache.data-cache.enable: "false"` 来关闭缓存，如下
+可通过在 Runtime 中指定 `goosefs.worker.ufs.instream.cache.enabled: "false"` 来关闭缓存，如下
 
 ```yaml
 apiVersion: data.fluid.io/v1alpha1
@@ -19,11 +19,8 @@ spec:
         quota: 290G
         high: "0.9"
         low: "0.8"
-  hadoopConfig: hdfsconfig
-  user: hadoop
-  fuse:
-    properties:
-      gfs.cache.data-cache.enable: "false"
+  properties:
+    goosefs.worker.ufs.instream.cache.enabled: "false"
 ```
 
 ### 打开元数据缓存
@@ -45,11 +42,8 @@ spec:
         quota: 290G
         high: "0.9"
         low: "0.8"
-  hadoopConfig: hdfsconfig
-  user: hadoop
-  fuse:
-    properties:
-      gfs.cache.meta-cache.enable: "true"
-      gfs.cache.data-cache.slicecache.enable: "true"
+  properties:
+    oosefs.worker.ufs.instream.cache.enabled: "true"
+    goosefs.user.metadata.cache.enabled: "true"
 ```
 
