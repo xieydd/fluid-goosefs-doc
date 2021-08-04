@@ -79,7 +79,7 @@ hbase-worker-l62m4   2/2     Running   0          104s   192.168.1.146   192.168
 **创建 fuse 节点上查看 mount 信息路径**
 ```shell
 $ kubectl exec -ti hbase-fuse-42csf bash
-$ ls /jfs/
+$ ls /runtime-mnt/goosefs/<namespace>/<DatasetName>/goosefs-fuse/
 drwxrwx--x 2 message   99  4096 Apr 23 16:39 /user
 drwxr-xr-x 2 message root  4096 Apr 23 16:38 /data
 ```

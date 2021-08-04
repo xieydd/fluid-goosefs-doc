@@ -51,7 +51,7 @@ metadata:
 spec:
   mounts:
     - mountPoint: https://mirrors.tuna.tsinghua.edu.cn/apache/hbase/stable/
-      name: hadoop
+      name: hbase
 ```
 TODO
 > mountPoint 这里为了方便用户进行实验使用的是 Web UFS, 使用 COS 作为 UFS 可见 []()
@@ -67,7 +67,7 @@ dataset.data.fluid.io/hbase created
 apiVersion: data.fluid.io/v1alpha1
 kind: GooseFSRuntime
 metadata:
-  name: hadoop
+  name: hbase
 spec:
   replicas: 3
   tieredstore:
@@ -91,22 +91,22 @@ goosefsruntime.data.fluid.io/hbase created
 
 $ kubectl get pod
 NAME                          READY   STATUS    RESTARTS   AGE
-hadoop-fuse-4v9mq     1/1     Running   0          84s
-hadoop-fuse-5kjbj     1/1     Running   0          84s
-hadoop-fuse-tp2q2     1/1     Running   0          84s
-hadoop-master-0       1/1     Running   0          104s
-hadoop-master-1       1/1     Running   0          102s
-hadoop-master-2       1/1     Running   0          100s
-hadoop-worker-cx8x7   1/1     Running   0          84s
-hadoop-worker-fjsr6   1/1     Running   0          84s
-hadoop-worker-fvpgc   1/1     Running   0          84s
+hbase-fuse-4v9mq     1/1     Running   0          84s
+hbase-fuse-5kjbj     1/1     Running   0          84s
+hbase-fuse-tp2q2     1/1     Running   0          84s
+hbase-master-0       1/1     Running   0          104s
+hbase-master-1       1/1     Running   0          102s
+hbase-master-2       1/1     Running   0          100s
+hbase-worker-cx8x7   1/1     Running   0          84s
+hbase-worker-fjsr6   1/1     Running   0          84s
+hbase-worker-fvpgc   1/1     Running   0          84s
 ```
 
 
 **查看 GooseFSRuntime 状态**
 ```shell
 NAME     MASTER PHASE   WORKER PHASE   FUSE PHASE   AGE
-hadoop   Ready           Ready            Ready     15m
+hbase   Ready           Ready            Ready     15m
 ```
 
 确认 `PHASE` 都为 Ready
@@ -116,11 +116,11 @@ hadoop   Ready           Ready            Ready     15m
 登陆上其中一个master的pod
 
 ```shell
-$ kubectl exec -ti hadoop-goosefs-master-0 bash
+$ kubectl exec -ti hbase-master-0 bash
 $ goosefs fs masterInfo
 ```
 可以看到 其中一个节点是 `LEADER` 其余两个是 `FOLLOWER` 
 ```shell
-current leader master: mnist-master-0:26000
-All masters: [mnist-master-0:26000, mnist-master-1:26000, mnist-master-2:26000]
+current leader master: hbase-master-0:26000
+All masters: [hbase-master-0:26000, hbase-master-1:26000, hbase-master-2:26000]
 ```

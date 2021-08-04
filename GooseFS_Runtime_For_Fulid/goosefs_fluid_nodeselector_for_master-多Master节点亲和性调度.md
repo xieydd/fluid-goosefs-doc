@@ -85,7 +85,7 @@ spec:
         low: "0.7"
   master:
     nodeSelector:
-      hbase-cache: true
+      hbase-cache: "true"
 ```
 该配置文件片段中，包含了许多与GooseFS相关的配置信息，这些信息将被Fluid用来启动一个GooseFS实例。上述配置片段中的`spec.replicas`属性被设置为1,这表明Fluid将会启动一个包含1个GooseFS Master和1个GooseFS Worker的GooseFS实例
 
