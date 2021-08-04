@@ -35,8 +35,8 @@ spec:
   mounts:
     - mountPoint: cosn://test-bucket/
       options:
-        fs.cos.accessKeyId: <COS_ACCESS_KEY_ID>
-        fs.cos.accessKeySecret: <COS_ACCESS_KEY_SECRET>
+        fs.cosn.userinfo.secretId: <COS_ACCESS_KEY_ID>
+        fs.cosn.userinfo.secretKey: <COS_ACCESS_KEY_SECRET>
         fs.cosn.bucket.region: <COS_REGION>
         fs.cosn.impl: org.apache.hadoop.fs.CosFileSystem
         fs.AbstractFileSystem.cosn.impl: org.apache.hadoop.fs.CosN
